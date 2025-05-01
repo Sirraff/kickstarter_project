@@ -6,14 +6,15 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.7
+#       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python [conda env:base] *
 #     language: python
-#     name: python3
+#     name: conda-base-py
 # ---
 
 # %% [markdown]
 # ###TEST
 
-# %%
+# %% [markdown]
+# #test2
