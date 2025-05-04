@@ -14,7 +14,53 @@
 # ---
 
 # %% [markdown]
-# ###TEST
+# ## CST 383: Intro to Data Science
+# # Project 2 
+#
+# # Predicting Kickstarter Campaign Success
+# ## Authors:
 
 # %% [markdown]
-# #test2
+# # Introduction: 
+# ### In this project, we use the Kickstarter Projects dataset to predict whether a campaign will be successful or not based on features such as ...
+# ### Dataset URL: https://www.kaggle.com/datasets/kemical/kickstarter-projects
+
+# %%
+import warnings
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.neighbors import KNeighborsClassifier
+
+# %%
+# plotting
+sns.set_theme(style='whitegrid', context='notebook')
+plt.rcParams['figure.figsize'] = 5,3
+
+# %% [markdown]
+# ## Read the data
+
+# %%
+#df = pd.read_csv("")
+
+# %%
+df.head()
+
+# %%
+df.info()
+
+# %% [markdown]
+# ## Data Exploration
+
+# %% [markdown]
+# ## Preprocessing
+
+# %% [markdown]
+# ## Test/Train Split
+
+# %% [markdown]
+# ## Baseline Accuracy
