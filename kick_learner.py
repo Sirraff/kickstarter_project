@@ -45,7 +45,7 @@ plt.rcParams['figure.figsize'] = 5,3
 # ## Read the data
 
 # %%
-#df = pd.read_csv("")
+df = pd.read_csv("ks-projects-201612.csv", low_memory = False)
 
 # %%
 df.head()
@@ -55,6 +55,8 @@ df.info()
 
 # %% [markdown]
 # ## Data Exploration
+
+# %%
 
 # %% [markdown]
 # ## Preprocessing
