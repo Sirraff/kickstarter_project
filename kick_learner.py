@@ -18,7 +18,7 @@
 # # Project 2 
 #
 # # Predicting Kickstarter Campaign Success
-# ## Authors:
+# ## Authors: Brianna Magallon, Tyler Pruitt, Rafael Reis
 
 # %% [markdown]
 # # Introduction: 
@@ -66,6 +66,14 @@ df['state '].value_counts()
 # %%
 df[df['state '] == "canceled"].head()
 
+# %%
+state_counts = df['state'].value_counts().head(10)
+state_counts.plot.bar()
+plt.title('Distribution of campaign outcomes')
+plt.xlabel('state')
+plt.ylabel('count')
+plt.show()
+
 # %% [markdown]
 # ## Preprocessing
 
@@ -74,3 +82,5 @@ df[df['state '] == "canceled"].head()
 
 # %% [markdown]
 # ## Baseline Accuracy
+
+# %%
