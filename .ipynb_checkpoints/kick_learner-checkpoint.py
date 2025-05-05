@@ -57,6 +57,14 @@ df.info()
 # ## Data Exploration
 
 # %%
+df.dropna()
+df.columns
+
+# %%
+df['state '].value_counts()
+
+# %%
+df[df['state '] == "canceled"].head()
 
 # %% [markdown]
 # ## Preprocessing
