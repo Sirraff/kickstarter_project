@@ -67,6 +67,9 @@ df['state'].value_counts()
 # %%
 df[df['state'] == "canceled"].head()
 
+# %% [markdown]
+# #### We want to see the different outcomes the campaigns had, and which ones will be most relevant for our predictions. 
+
 # %%
 state_counts = df['state'].value_counts().head(10)
 state_counts.plot.bar()
@@ -74,6 +77,21 @@ plt.title('Distribution of campaign outcomes')
 plt.xlabel('state')
 plt.ylabel('count')
 plt.show()
+
+# %% [markdown]
+# #### Here we are able to see that "Failed" and "Successful" are the most common. We want to explore if "canceled" should fall under the "failed" category.
+
+# %% [markdown]
+# #### We want to see how Kickstarter campaigns are distributed across different project categories. This will help us understand which categories are most popular and whether there is a class imbalance. 
+
+# %%
+df['main_category '].value_counts().head(10).plot.bar()
+plt.title("Number of campaigns per main category")
+plt.xlabel("main category")
+plt.ylabel("count")
+plt.show()
+
+# %%
 
 # %%
 df.sample(10)
