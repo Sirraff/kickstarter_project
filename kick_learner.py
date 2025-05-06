@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.17.1
+#       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: Python [conda env:base] *
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-base-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -45,10 +45,11 @@ plt.rcParams['figure.figsize'] = 5,3
 # ## Read the data
 
 # %%
-df = pd.read_csv("ks-projects-201612.csv", low_memory = False)
+# df = pd.read_csv("ks-projects-201612.csv", low_memory = False)
+df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False) # to make encoding work, at elast on macOS
 
 # %%
-df.head()
+df.sample(10)
 
 # %%
 df.info()
@@ -57,7 +58,6 @@ df.info()
 # ## Data Exploration
 
 # %%
-df.dropna()
 df.columns
 
 # %%
@@ -74,13 +74,31 @@ plt.xlabel('state')
 plt.ylabel('count')
 plt.show()
 
+# %%
+df.sample(10)
+
 # %% [markdown]
-# ## Preprocessing
+# ## Preprocessing /Data Cleaning
+
+# %%
+df = df.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
+
+# %%
+df.sample(10)
+
+# %%
+df[df.isnull().any(axis=1)].sample(10)
+
+# %%
+df = df.rename(columns={"state ": "state"}) # There's a trailing space in the column name that is annoying
+df = df[df['state'].isin(["successful", "failed	", "canceled"])]
+
+# %%
+print("Rows still with null values: ", len(df[df.isnull().any(axis=1)]))
+df[df.isnull().any(axis=1)].head(10)
 
 # %% [markdown]
 # ## Test/Train Split
 
 # %% [markdown]
 # ## Baseline Accuracy
-
-# %%
