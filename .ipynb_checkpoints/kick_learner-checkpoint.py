@@ -18,7 +18,7 @@
 # # Project 2 
 #
 # # Predicting Kickstarter Campaign Success
-# ## Authors:
+# ## Authors: Brianna Magallon, Tyler Pruitt, Rafael Reis
 
 # %% [markdown]
 # # Introduction: 
@@ -45,10 +45,12 @@ plt.rcParams['figure.figsize'] = 5,3
 # ## Read the data
 
 # %%
-df = pd.read_csv("ks-projects-201612.csv", low_memory = False)
+# df = pd.read_csv("ks-projects-201612.csv", low_memory = False)
+df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False) # to make encoding work, at elast on macOS
 
 # %%
-df.head()
+df.columns = df.columns.str.strip()
+df.sample(5)
 
 # %%
 df.info()
@@ -57,20 +59,59 @@ df.info()
 # ## Data Exploration
 
 # %%
-df.dropna()
 df.columns
 
 # %%
-df['state '].value_counts()
+df['state'].value_counts()
 
 # %%
-df[df['state '] == "canceled"].head()
+df[df['state'] == "canceled"].head()
+
+# %%
+state_counts = df['state'].value_counts().head(10)
+state_counts.plot.bar()
+plt.title('Distribution of campaign outcomes')
+plt.xlabel('state')
+plt.ylabel('count')
+plt.show()
+
+# %%
+df.sample(10)
 
 # %% [markdown]
-# ## Preprocessing
+# ## Preprocessing /Data Cleaning
+
+# %%
+df = df.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
+
+# %%
+df.sample(10)
+
+# %%
+df[df.isnull().any(axis=1)].sample(10)
+
+# %%
+df = df.rename(columns={"state ": "state"}) # There's a trailing space in the column name that is annoying
+df = df[df['state'].isin(["successful", "failed	", "canceled"])]
+
+# %%
+print("Rows still with null values: ", len(df[df.isnull().any(axis=1)]))
+df[df.isnull().any(axis=1)].sample(5)
 
 # %% [markdown]
-# ## Test/Train Split
+# It seems the vast majority of Kickstarter campaigns with null values fall under the Music and Film categories, often with zero backers. The campaign states vary, which likely reflects that creating music or films isn’t strongly tied to financial backing (there’s probably a joke in there somewhere).
+#
+# Since these projects lack key information like backer count or country and only account for 127 rows, we’ll remove them from the dataset.
 
-# %% [markdown]
-# ## Baseline Accuracy
+# %%
+df = df.dropna()
+len(df[df.isnull().any(axis=1)]) # checking
+df.info() # Current state
+
+# %%
+df['backers'].info()
+
+# %%
+df['goal'] = pd.to_numeric(df['goal'], errors='coerce').astype(int)
+# df.dropna(subset=['goal'], inplace=True)
+print(df['goal'])

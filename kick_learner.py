@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.7
+#       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python [conda env:base] *
 #     language: python
-#     name: python3
+#     name: conda-base-py
 # ---
 
 # %% [markdown]
@@ -49,7 +49,8 @@ plt.rcParams['figure.figsize'] = 5,3
 df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False) # to make encoding work, at elast on macOS
 
 # %%
-df.sample(10)
+df.columns = df.columns.str.strip()
+df.sample(5)
 
 # %%
 df.info()
@@ -61,10 +62,10 @@ df.info()
 df.columns
 
 # %%
-df['state '].value_counts()
+df['state'].value_counts()
 
 # %%
-df[df['state '] == "canceled"].head()
+df[df['state'] == "canceled"].head()
 
 # %%
 state_counts = df['state'].value_counts().head(10)
@@ -108,5 +109,9 @@ len(df[df.isnull().any(axis=1)]) # checking
 df.info() # Current state
 
 # %%
+df['backers'].info()
 
 # %%
+df['goal'] = pd.to_numeric(df['goal'], errors='coerce').astype(int)
+# df.dropna(subset=['goal'], inplace=True)
+print(df['goal'])
