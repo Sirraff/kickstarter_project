@@ -95,10 +95,18 @@ df = df[df['state'].isin(["successful", "failed	", "canceled"])]
 
 # %%
 print("Rows still with null values: ", len(df[df.isnull().any(axis=1)]))
-df[df.isnull().any(axis=1)].head(10)
+df[df.isnull().any(axis=1)].sample(5)
 
 # %% [markdown]
-# ## Test/Train Split
+# It seems the vast majority of Kickstarter campaigns with null values fall under the Music and Film categories, often with zero backers. The campaign states vary, which likely reflects that creating music or films isn’t strongly tied to financial backing (there’s probably a joke in there somewhere).
+#
+# Since these projects lack key information like backer count or country and only account for 127 rows, we’ll remove them from the dataset.
 
-# %% [markdown]
-# ## Baseline Accuracy
+# %%
+df = df.dropna()
+len(df[df.isnull().any(axis=1)]) # checking
+df.info() # Current state
+
+# %%
+
+# %%
