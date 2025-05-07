@@ -216,7 +216,7 @@ plt.show()
 # - Both models, while better than guessing the majority class, still left substantial room for improvement.
 #
 # ### Challenges & Next Steps:
-# - The overfitting observed, especially in KNN, suggests a need for **feature scaling**, **regularization**, or **simplification**.
+# - The overfitting observed, especially in KNN, suggests a need for perhaps **feature scaling**, **regularization**, or **simplification**.
 # - We haven’t yet made use of potentially informative categorical features like main_category or category.
 # - Adding **cross-validation**, **feature engineering**, and testing other models (e.g., decision trees, gradient boosting) would be valuable next steps.
 #

@@ -13,17 +13,16 @@
 #     name: python3
 # ---
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
-# # CST 383: Intro to Data Science  
-# Project 2: Predicting Kickstarter Goal Completion  
+# %% [markdown]
+# # CST 383 – Intro to Data Science
+# ### Project 2: Predicting Kickstarter Goal Completion
 # **Authors:** Brianna Magallon, Tyler Pruitt, Rafael L.S. Reis
 
 # %% [markdown]
-# # Introduction
-#
+# ## Introduction
 # In this project, we use the Kickstarter Projects dataset to build a model that predicts whether a crowdfunding campaign will succeed or fail based on information available at launch. Each entry includes metadata such as goal amount, number of backers, campaign duration, and category.
 #
-# We treat this as a **binary classification problem**, where the outcomes are `'successful'` or `'failed'`. We merge `'canceled'` campaigns into the `'failed'` category, based on the observation that they typically don't meet funding goals.
+# We treat this as a binary classification problem, where the outcomes are `'successful'` or `'failed'`. We merge `'canceled'` campaigns into the `'failed'` category, based on the observation that they typically don't meet funding goals.
 #
 # **Dataset Source:**  
 # [Kickstarter Projects (Kaggle)](https://www.kaggle.com/datasets/kemical/kickstarter-projects)
@@ -45,7 +44,7 @@ sns.set_theme(style='whitegrid', context='notebook')
 plt.rcParams['figure.figsize'] = 5,3
 
 # %% [markdown]
-# # Data Exploration
+# ## Data Exploration
 
 # %%
 df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False)
@@ -92,7 +91,7 @@ plt.ylabel("count")
 plt.show()
 
 # %% [markdown]
-# # Data Cleaning & Preprocessing
+# ## Data Cleaning & Preprocessing
 #
 # We begin cleaning by dropping empty or irrelevant columns and filtering to U.S.-based projects.
 
@@ -110,7 +109,7 @@ print("Rows still with null values: ", len(df[df.isnull().any(axis=1)]))
 df[df.isnull().any(axis=1)].sample(5)
 
 # %% [markdown]
-# The majority of rows with null values are music or film projects with 0 backers and questionable labels. These rows are minimal (~127), so we drop them.
+# The majority of rows with null values are music or film projects with 0 backers and questionable labels. There's probably a starving artist joke somewhere in there. These rows are minimal (~127), so we drop them.
 
 # %%
 df = df.dropna()
@@ -121,7 +120,7 @@ df.info()
 df['backers'].info()
 
 # %% [markdown]
-# We now correct numeric fields and focus on U.S. projects.
+# We now correct numeric fields and focus on U.S. projects. Some columns have numeric values stored as strings, so we convert them. This helps avoid bugs later.
 
 # %%
 df['goal'] = pd.to_numeric(df['goal'], errors='coerce').astype(int)
@@ -133,7 +132,7 @@ df = df[df['country'] == 'US']
 df = df.drop(columns=["usd pledged"])
 
 # %% [markdown]
-# We convert string dates to datetime, compute duration, and encode labels.
+# We convert string dates to datetime, compute duration, and encode labels for our classification model. We also merge `canceled` with `failed`, since both don't meet funding goals — canceled ones just end early.
 
 # %%
 df['launched'] = pd.to_datetime(df['launched'])
@@ -157,12 +156,9 @@ df.info()
 df.sample(5)
 
 # %% [markdown]
-# Everything looks good so far. We may revisit the category fields in later iterations.
-
-# %% [markdown]
-# # Machine Learning
+# ## Machine Learning
 #
-# We define our features and target, then apply a baseline and two models.
+# We define our features and target, then apply a baseline and two models. We'll compare their performance to understand how well basic models do on this problem.
 
 # %%
 X = df[['goal', 'backers', 'pledged', 'duration_days']]
@@ -188,7 +184,7 @@ print("KNN accuracy:", accuracy_score(y_test, y_pred_knn))
 print(classification_report(y_test, y_pred_knn))
 
 # %% [markdown]
-# Both models beat the baseline, but the KNN model may be overfitting. We’ll explore this further.
+# Both models beat the baseline, but KNN appears to be overfitting. More work is needed to improve generalization.
 
 # %%
 ConfusionMatrixDisplay.from_estimator(logreg, X_test, y_test)
@@ -207,7 +203,7 @@ plt.xlabel("Impact on 'Failure' Probability")
 plt.show()
 
 # %% [markdown]
-# The feature coefficients are useful for interpreting model behavior. Backers and pledged amount are strong predictors of success.
+# The feature coefficients are helpful for interpretation. Backers and pledged amount seem to be the strongest predictors.
 
 # %% [markdown]
 # ## Conclusion
@@ -221,12 +217,11 @@ plt.show()
 #
 # ### Challenges & Next Steps:
 # - The overfitting observed, especially in KNN, suggests a need for **feature scaling**, **regularization**, or **simplification**.
-# - We haven’t yet made use of potentially informative categorical features like `main_category` or `category`.
+# - We haven’t yet made use of potentially informative categorical features like main_category or category.
 # - Adding **cross-validation**, **feature engineering**, and testing other models (e.g., decision trees, gradient boosting) would be valuable next steps.
 #
 # While this was a solid start, there’s still a lot of work ahead to build a robust and generalizable model. That said, we're excited to dive into model tuning and optimization since this is the part we all find most engaging. The data cleaning process was a bit frustrating and a bit of a pain sometimes... so we're glad to have made it through that and can now focus on the fun side of machine learning :)
 #
 #
 #
-# (I know we might do some more cleaning stuff, but we're mostly done)
-#
+# (I know we might do some more cleaning stuff, but we're mostly done with that)
