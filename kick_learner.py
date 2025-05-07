@@ -48,11 +48,11 @@ plt.rcParams['figure.figsize'] = 5,3
 # df = pd.read_csv("ks-projects-201612.csv", low_memory = False)
 df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False) # to make encoding work, at elast on macOS
 
-# %%
+# %% jupyter={"outputs_hidden": true}
 df.columns = df.columns.str.strip()
 df.sample(5)
 
-# %%
+# %% jupyter={"outputs_hidden": true}
 df.info()
 
 # %% [markdown]
@@ -66,6 +66,16 @@ df['state'].value_counts()
 
 # %%
 df[df['state'] == "canceled"].head()
+
+# %% jupyter={"outputs_hidden": true}
+dftest = df[df['country'] == 'US']
+dftest = dftest.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
+
+# %%
+dftest['category'].value_counts()
+
+# %%
+dftest['main_category'].value_counts()
 
 # %% [markdown]
 # #### We want to see the different outcomes the campaigns had, and which ones will be most relevant for our predictions. 
@@ -93,8 +103,8 @@ plt.show()
 
 # %%
 
-# %%
-df.sample(10)
+# %% jupyter={"outputs_hidden": true}
+df.sample(5)
 
 # %% [markdown]
 # ## Preprocessing /Data Cleaning
@@ -102,17 +112,17 @@ df.sample(10)
 # %%
 df = df.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
 
-# %%
-df.sample(10)
+# %% jupyter={"outputs_hidden": true}
+df.sample(5)
 
-# %%
-df[df.isnull().any(axis=1)].sample(10)
+# %% jupyter={"outputs_hidden": true}
+df[df.isnull().any(axis=1)].sample(5)
 
 # %%
 df = df.rename(columns={"state ": "state"}) # There's a trailing space in the column name that is annoying
 df = df[df['state'].isin(["successful", "failed	", "canceled"])]
 
-# %%
+# %% jupyter={"outputs_hidden": true}
 print("Rows still with null values: ", len(df[df.isnull().any(axis=1)]))
 df[df.isnull().any(axis=1)].sample(5)
 
@@ -131,5 +141,9 @@ df['backers'].info()
 
 # %%
 df['goal'] = pd.to_numeric(df['goal'], errors='coerce').astype(int)
-# df.dropna(subset=['goal'], inplace=True)
+df.dropna(subset=['goal'], inplace=True)
 print(df['goal'])
+
+# %%
+#Dropping all rows outside the US
+df = df[df['country'] == 'US']
