@@ -147,9 +147,13 @@ numeric_cols = ['goal', 'pledged', 'backers', 'pledged']
 for col in numeric_cols:
     df[col] = pd.to_numeric(df[col], errors='coerce')
 
+df['launch_day'] = df['launched'].dt.day
+df['launch_month'] = df['launched'].dt.month
 
+df = df.drop(columns=['ID', 'launched', 'deadline', 'state', 'country', 'currency', 'pledged'])
 
-df = df.drop(columns=['ID', 'name', 'deadline', 'state', 'country', 'currency','pledged'])
+# %% [markdown]
+# We are dropping these columns for a variey of reasons. In the case of ID, country, and currency. The contained information is not necessary for predictions as we are focusing on projects in the US, which all use the same currency. We are replacing state with "state_encoded" making the original unecessary. Finally, pledged isn't helpful for the sake of prediction due to the fact that it directly tells the end result, making it useless for the sake of predicting the result.
 
 # %%
 df.info()
@@ -163,7 +167,7 @@ df.sample(5)
 # We define our features and target, then apply a baseline and two models. We'll compare their performance to understand how well basic models do on this problem.
 
 # %%
-X = df[['goal', 'backers', 'pledged', 'duration_days']]
+X = df[['goal', 'backers', 'duration_days']]
 y = df['state_encoded']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
