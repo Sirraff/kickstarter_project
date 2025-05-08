@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.7
+#       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python [conda env:base] *
 #     language: python
-#     name: python3
+#     name: conda-base-py
 # ---
 
 # %% [markdown]
@@ -147,7 +147,9 @@ numeric_cols = ['goal', 'pledged', 'backers', 'pledged']
 for col in numeric_cols:
     df[col] = pd.to_numeric(df[col], errors='coerce')
 
-df = df.drop(columns=['ID', 'name', 'launched', 'deadline', 'state', 'country', 'currency'])
+
+
+df = df.drop(columns=['ID', 'name', 'deadline', 'state', 'country', 'currency','pledged'])
 
 # %%
 df.info()
@@ -204,6 +206,9 @@ plt.show()
 
 # %% [markdown]
 # The feature coefficients are helpful for interpretation. Backers and pledged amount seem to be the strongest predictors.
+
+# %%
+df.drop(columns=['backers']).sample(5)
 
 # %% [markdown]
 # ## Conclusion
