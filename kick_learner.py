@@ -6,72 +6,64 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.17.1
+#       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: Python [conda env:base] *
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-base-py
+#     name: python3
 # ---
 
 # %% [markdown]
-# ## CST 383: Intro to Data Science
-# # Project 2 
-#
-# # Predicting Kickstarter Campaign Success
-# ## Authors: Brianna Magallon, Tyler Pruitt, Rafael Reis
+# # CST 383 – Intro to Data Science
+# ### Project 2: Predicting Kickstarter Goal Completion
+# **Authors:** Brianna Magallon, Tyler Pruitt, Rafael L.S. Reis
 
 # %% [markdown]
-# # Introduction: 
-# #### In this project, we use the Kickstarter Projects dataset to predict whether a campaign will be successful or not. The dataset includes campaign data like goal amount, category, duration, and currency. Our goal is to predict campaign success using classification models. 
-# ### Dataset URL: https://www.kaggle.com/datasets/kemical/kickstarter-projects
+# ## Introduction
+# In this project, we use the Kickstarter Projects dataset to build a model that predicts whether a crowdfunding campaign will succeed or fail based on information available at launch. Each entry includes metadata such as goal amount, number of backers, campaign duration, and category.
+#
+# We treat this as a binary classification problem, where the outcomes are `'successful'` or `'failed'`. We merge `'canceled'` campaigns into the `'failed'` category, based on the observation that they typically don't meet funding goals.
+#
+# **Dataset Source:**  
+# [Kickstarter Projects (Kaggle)](https://www.kaggle.com/datasets/kemical/kickstarter-projects)
 
 # %%
 import warnings
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
-from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import ConfusionMatrixDisplay
 
 # %%
-# plotting
 sns.set_theme(style='whitegrid', context='notebook')
 plt.rcParams['figure.figsize'] = 5,3
 
 # %% [markdown]
-# ## Read the data
+# ## Data Exploration
 
 # %%
-df = pd.read_csv("ks-projects-201612.csv", low_memory = False)
-#df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False) # to make encoding work, at elast on macOS
+df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False)
 
 # %%
-#remove trailing spaces
 df.columns = df.columns.str.strip()
-
-# %%
 df.sample(5)
 
 # %%
 df.info()
 
-# %% [markdown]
-# ## Data Exploration
-
-# %% [markdown]
-# #### In this section, we want to explore key aspects of the kickstarter data, including campaign outcomes, category distribution, and common funding goals. This will help us understand potential predictors of success. 
-
-# %% [markdown]
-# A look at the columns.
-
 # %%
-df.columns
+df['state'].value_counts()
 
 # %%
 df[df['state'] == "canceled"].head()
+
+# %%
+df['country'].value_counts()
 
 # %%
 dftest = df[df['country'] == 'US']
@@ -83,9 +75,6 @@ dftest['category'].value_counts()
 # %%
 dftest['main_category'].value_counts()
 
-# %% [markdown]
-# We want to see the different outcomes the campaigns had, and which ones will be most relevant for our predictions. 
-
 # %%
 state_counts = df['state'].value_counts().head(10)
 state_counts.plot.bar()
@@ -94,58 +83,23 @@ plt.xlabel('state')
 plt.ylabel('count')
 plt.show()
 
-# %% [markdown]
-# Here we are able to see that "Failed" and "Successful" are the most common. Most campaings fail and there is an imbalance. 
-
-# %% [markdown]
-# Here is the exact number in each of these states.
-
-# %%
-df['state'].value_counts()
-
-# %% [markdown]
-# We want to see how Kickstarter campaigns are distributed across different project categories. This will help us understand which categories are most popular and whether there is an imbalance. 
-
 # %%
 df['main_category'].value_counts().head(10).plot.bar()
 plt.title("Number of campaigns per main category")
-plt.xlabel("main category")
+plt.xlabel("main category ")
 plt.ylabel("count")
 plt.show()
 
 # %% [markdown]
-# This plot shows us that Film & Video, Music, Publishing are the three most popular Kickstarter categories, while Food, Fashion and Theater are the three least common. 
-
-# %% [markdown]
-# Let’s explore which goal values appear most often. This will help us identify any odd entries or common default values.
-
-# %%
-df['goal'].value_counts().head(10).plot.bar()
-plt.title("Most common goal amounts")
-plt.xlabel("goal")
-plt.ylabel("count")
-plt.show()
-
-# %% [markdown]
-# We are able to see that the most common goal amounts are round numbers like 5000, 1000, and 10000.
-
-# %% [markdown]
-# ## Preprocessing /Data Cleaning
-
-# %% [markdown]
-# #### Before applying any machine learning models, we need to clean and prepare the data. 
-
-# %% [markdown]
-# Here we are removing irrelevant columns that contain no useful information. 
+# ## Data Cleaning & Preprocessing
+#
+# We begin cleaning by dropping empty or irrelevant columns and filtering to U.S.-based projects.
 
 # %%
 df = df.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
 
 # %%
 df[df.isnull().any(axis=1)].sample(5)
-
-# %% [markdown]
-# Keep only rows where 'state' is one of the target outcomes
 
 # %%
 df = df[df['state'].isin(["successful", "failed", "canceled"])]
@@ -155,26 +109,119 @@ print("Rows still with null values: ", len(df[df.isnull().any(axis=1)]))
 df[df.isnull().any(axis=1)].sample(5)
 
 # %% [markdown]
-# It seems the vast majority of Kickstarter campaigns with null values fall under the Music and Film categories, often with zero backers. The campaign states vary, which likely reflects that creating music or films isn’t strongly tied to financial backing (there’s probably a joke in there somewhere).
-#
-# Since these projects lack key information like backer count or country and only account for 127 rows, we’ll remove them from the dataset.
+# The majority of rows with null values are music or film projects with 0 backers and questionable labels. There's probably a starving artist joke somewhere in there. These rows are minimal (~127), so we drop them.
 
 # %%
 df = df.dropna()
-len(df[df.isnull().any(axis=1)]) # checking
-df.info() # Current state
+len(df[df.isnull().any(axis=1)])  # confirm
+df.info()
+
+# %%
+df['backers'].info()
 
 # %% [markdown]
-# Convert 'goal' column to numeric, remove any rows where conversion fails
+# We now correct numeric fields and focus on U.S. projects. Some columns have numeric values stored as strings, so we convert them. This helps avoid bugs later.
 
 # %%
 df['goal'] = pd.to_numeric(df['goal'], errors='coerce').astype(int)
 df.dropna(subset=['goal'], inplace=True)
 print(df['goal'])
 
+# %%
+df = df[df['country'] == 'US']
+df = df.drop(columns=["usd pledged"])
+
 # %% [markdown]
-# Keep only US campaigns
+# We convert string dates to datetime, compute duration, and encode labels for our classification model. We also merge `canceled` with `failed`, since both don't meet funding goals — canceled ones just end early.
 
 # %%
-#Dropping all rows outside the US
-df = df[df['country'] == 'US']
+df['launched'] = pd.to_datetime(df['launched'])
+df['deadline'] = pd.to_datetime(df['deadline'])
+df['duration_days'] = (df['deadline'] - df['launched']).dt.days
+
+df['state'] = df['state'].replace('canceled', 'failed')
+df = df[df['state'].isin(['failed', 'successful'])].copy()
+df['state_encoded'] = df['state'].map({'failed': 1, 'successful': 0})
+
+numeric_cols = ['goal', 'pledged', 'backers', 'pledged']
+for col in numeric_cols:
+    df[col] = pd.to_numeric(df[col], errors='coerce')
+
+df = df.drop(columns=['ID', 'name', 'launched', 'deadline', 'state', 'country', 'currency'])
+
+# %%
+df.info()
+
+# %%
+df.sample(5)
+
+# %% [markdown]
+# ## Machine Learning
+#
+# We define our features and target, then apply a baseline and two models. We'll compare their performance to understand how well basic models do on this problem.
+
+# %%
+X = df[['goal', 'backers', 'pledged', 'duration_days']]
+y = df['state_encoded']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+baseline = DummyClassifier(strategy='most_frequent')
+baseline.fit(X_train, y_train)
+y_pred_baseline = baseline.predict(X_test)
+print("Baseline accuracy:", accuracy_score(y_test, y_pred_baseline))
+
+logreg = LogisticRegression(max_iter=1000)
+logreg.fit(X_train, y_train)
+y_pred_logreg = logreg.predict(X_test)
+print("Logistic Regression accuracy:", accuracy_score(y_test, y_pred_logreg))
+print(classification_report(y_test, y_pred_logreg))
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+y_pred_knn = knn.predict(X_test)
+print("KNN accuracy:", accuracy_score(y_test, y_pred_knn))
+print(classification_report(y_test, y_pred_knn))
+
+# %% [markdown]
+# Both models beat the baseline, but KNN appears to be overfitting. More work is needed to improve generalization.
+
+# %%
+ConfusionMatrixDisplay.from_estimator(logreg, X_test, y_test)
+plt.title("Logistic Regression - Confusion Matrix")
+plt.show()
+
+ConfusionMatrixDisplay.from_estimator(knn, X_test, y_test)
+plt.title("KNN - Confusion Matrix")
+plt.show()
+
+# %%
+coeffs = pd.Series(logreg.coef_[0], index=X.columns)
+coeffs.sort_values().plot(kind='barh')
+plt.title("Logistic Regression Feature Coefficients")
+plt.xlabel("Impact on 'Failure' Probability")
+plt.show()
+
+# %% [markdown]
+# The feature coefficients are helpful for interpretation. Backers and pledged amount seem to be the strongest predictors.
+
+# %% [markdown]
+# ## Conclusion
+#
+# This project demonstrates the potential of using simple machine learning models to predict Kickstarter campaign outcomes based on basic project metadata. While we achieved accuracy improvements over a baseline dummy classifier, the models are still far from production-ready.
+#
+# We found that:
+# - **Logistic Regression** provided reasonable performance and interpretable coefficients, highlighting the importance of features like number of backers and pledged amount.
+# - **K-Nearest Neighbors** appeared to overfit the training data, performing well on training but less effectively on the test set.
+# - Both models, while better than guessing the majority class, still left substantial room for improvement.
+#
+# ### Challenges & Next Steps:
+# - The overfitting observed, especially in KNN, suggests a need for perhaps **feature scaling**, **regularization**, or **simplification**.
+# - We haven’t yet made use of potentially informative categorical features like main_category or category.
+# - Adding **cross-validation**, **feature engineering**, and testing other models (e.g., decision trees, gradient boosting) would be valuable next steps.
+#
+# While this was a solid start, there’s still a lot of work ahead to build a robust and generalizable model. That said, we're excited to dive into model tuning and optimization since this is the part we all find most engaging. The data cleaning process was a bit frustrating and a bit of a pain sometimes... so we're glad to have made it through that and can now focus on the fun side of machine learning :)
+#
+#
+#
+# (I know we might do some more cleaning stuff, but we're mostly done with that)
