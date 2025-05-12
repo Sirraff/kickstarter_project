@@ -71,10 +71,20 @@ dftest = df[df['country'] == 'US']
 dftest = dftest.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
 
 # %%
-dftest['category'].value_counts()
+category_counts = dftest['category'].value_counts().head(15)
+category_counts.plot.barh()
+plt.title('Distribution of categories')
+plt.xlabel('count')
+plt.ylabel('category')
+plt.show()
 
 # %%
-dftest['main_category'].value_counts()
+main_category_count = dftest['main_category'].value_counts()
+main_category_count.plot.barh()
+plt.title('Distribution of main categories')
+plt.xlabel('count')
+plt.ylabel('category')
+plt.show()
 
 # %%
 state_counts = df['state'].value_counts().head(10)
@@ -180,7 +190,7 @@ df.sample(5)
 # We define our features and target, then apply a baseline and two models. We'll compare their performance to understand how well basic models do on this problem.
 
 # %%
-X = df[['goal', 'backers', 'duration_days']]
+X = df[['goal', 'backers', 'duration_days','launch_day','launch_month']]
 y = df['state_encoded']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -226,6 +236,8 @@ plt.show()
 
 # %%
 df.drop(columns=['backers']).sample(5)
+
+# %%
 
 # %% [markdown]
 # ## Conclusion
