@@ -47,7 +47,8 @@ plt.rcParams['figure.figsize'] = 5,3
 # ## Data Exploration
 
 # %%
-df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False)
+df = pd.read_csv("ks-projects-201612.csv", low_memory=False)
+#df = pd.read_csv("ks-projects-201612.csv", encoding="cp1252", low_memory=False)
 
 # %%
 df.columns = df.columns.str.strip()
@@ -94,6 +95,18 @@ plt.show()
 # ## Data Cleaning & Preprocessing
 #
 # We begin cleaning by dropping empty or irrelevant columns and filtering to U.S.-based projects.
+
+# %%
+df['title_length'] = df['name'].str.len()
+df['title_length'].value_counts().head(10).sort_index().plot.bar()
+plt.title("common title lengths")
+plt.xlabel("title length")
+plt.ylabel("number of campaigns")
+plt.show()
+
+# %%
+common_words = df['name'].str.lower().str.split().explode().value_counts().head(10)
+print(common_words)
 
 # %%
 df = df.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
