@@ -14,12 +14,13 @@
 # ---
 
 # %% [markdown]
-# # Predicting Kickstarter Goal Completion
+# # CST 383 – Intro to Data Science
+# ### Project 2: Predicting Kickstarter Goal Completion
 # **Authors:** Brianna Magallon, Tyler Pruitt, Rafael L.S. Reis
 
 # %% [markdown]
 # ## Introduction
-# In this project, we use the Kickstarter Projects dataset to build a model that predicts whether a crowdfunding campaign will succeed or fail based on information available at launch. This helps creators set realistic goals and improve campaign design. Each entry includes metadata such as goal amount, number of backers, campaign duration, and category.
+# In this project, we use the Kickstarter Projects dataset to build a model that predicts whether a crowdfunding campaign will succeed or fail based on information available at launch. Each entry includes metadata such as goal amount, number of backers, campaign duration, and category.
 #
 # We treat this as a binary classification problem, where the outcomes are `'successful'` or `'failed'`. We merge `'canceled'` campaigns into the `'failed'` category, based on the observation that they typically don't meet funding goals.
 #
@@ -35,12 +36,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report
-from sklearn.metrics import ConfusionMatrixDisplay
 
 # %%
 sns.set_theme(style='whitegrid', context='notebook')
@@ -249,8 +250,6 @@ plt.show()
 
 # %%
 df.drop(columns=['backers']).sample(5)
-
-# %%
 
 # %% [markdown]
 # Exclude backers and include title name features 

@@ -14,13 +14,12 @@
 # ---
 
 # %% [markdown]
-# # CST 383 – Intro to Data Science
-# ### Project 2: Predicting Kickstarter Goal Completion
+# # Predicting Kickstarter Goal Completion
 # **Authors:** Brianna Magallon, Tyler Pruitt, Rafael L.S. Reis
 
 # %% [markdown]
 # ## Introduction
-# In this project, we use the Kickstarter Projects dataset to build a model that predicts whether a crowdfunding campaign will succeed or fail based on information available at launch. Each entry includes metadata such as goal amount, number of backers, campaign duration, and category.
+# In this project, we use the Kickstarter Projects dataset to build a model that predicts whether a crowdfunding campaign will succeed or fail based on information available at launch. This helps creators set realistic goals and improve campaign design. Each entry includes metadata such as goal amount, number of backers, campaign duration, and category.
 #
 # We treat this as a binary classification problem, where the outcomes are `'successful'` or `'failed'`. We merge `'canceled'` campaigns into the `'failed'` category, based on the observation that they typically don't meet funding goals.
 #
@@ -36,6 +35,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.metrics import ConfusionMatrixDisplay
 
@@ -106,17 +109,27 @@ plt.show()
 #
 # We begin cleaning by dropping empty or irrelevant columns and filtering to U.S.-based projects.
 
-# %%
-df['title_length'] = df['name'].str.len()
-df['title_length'].value_counts().head(10).sort_index().plot.bar()
-plt.title("common title lengths")
-plt.xlabel("title length")
-plt.ylabel("number of campaigns")
-plt.show()
+# %% [markdown]
+# Campaign titles might include important information about the type of project, which could be predictive of success. To explore this, we want to extract the most common meaningful words from the campaign titles and create new features.  
 
 # %%
-common_words = df['name'].str.lower().str.split().explode().value_counts().head(10)
-print(common_words)
+df['lower_title'] = df['name'].str.lower()
+df['words'] = df['lower_title'].str.split()
+#turn all words into one big series
+all_words = df['words'].explode()
+word_counts = all_words.value_counts()
+#remove meaningless words
+stopwords = ['the', 'a', 'of', 'and', 'for', 'to', 'in', '&', '-', '(canceled)', 'by', 'your', 'with', 'on', 'an', 'my', 'new', 'from', 'first', 'short', 'is', 'you', 'help', 'at']
+filtered_words = word_counts[~word_counts.index.isin(stopwords)]
+print(filtered_words.head(10))
+
+# %%
+top_words = ['album', 'film', 'project', 'book', 'game', 'art', 'music', 'debut', 'documentary', 'life']
+for word in top_words:
+    df[f'has_{word}'] = df['lower_title'].str.contains(rf'\b{word}\b', na=False).astype(int)
+
+#show the new columns
+df.columns
 
 # %%
 df = df.drop(columns=["Unnamed: 13", "Unnamed: 14", "Unnamed: 15", "Unnamed: 16"])
@@ -238,6 +251,66 @@ plt.show()
 df.drop(columns=['backers']).sample(5)
 
 # %%
+
+# %% [markdown]
+# Exclude backers and include title name features 
+
+# %%
+#define predictor variables and target
+X = df[['goal', 'duration_days'] + [f'has_{w}' for w in top_words]]
+y = df['state_encoded']
+
+#Test Train Split 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+#baseline accuracy
+baseline_accuracy = y_train.value_counts(normalize=True).max()
+print("Baseline accuracy:", baseline_accuracy)
+
+#scale predictor variables
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+#KNN
+for k in [3, 5, 7, 9, 11 , 15]:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    scores = cross_val_score(knn, X_train_scaled, y_train, cv=5)
+    print(f"K={k} - Cross-val accuracy: {scores.mean():.3f}")
+
+#logistic regression
+logreg = LogisticRegression(max_iter=1000)
+
+#cross validation
+cv_scores = cross_val_score(logreg, X_train_scaled, y_train, cv=5)
+print("Cross-val accuracy:", cv_scores.mean())
+
+# %% [markdown]
+# We apply forward feature selection to identify top 5 features 
+
+# %%
+#define all features (goal, duration_days, title keywords)
+X = df[['goal', 'duration_days'] + [f'has_{w}' for w in top_words]]
+y = df['state_encoded']
+
+#Test Train Split 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+#scale predictors
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+#logistic regression
+logreg = LogisticRegression(max_iter=1000)
+
+#forward feature selection
+selector = SequentialFeatureSelector(logreg, n_features_to_select=5, direction='forward', cv=5)
+selector.fit(X_train_scaled, y_train)
+
+#print selected features
+selected_mask = selector.get_support()
+selected_features = X.columns[selected_mask]
+print("Selected features:", list(selected_features))
 
 # %% [markdown]
 # ## Conclusion
