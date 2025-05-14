@@ -14,15 +14,17 @@
 # ---
 
 # %% [markdown]
-# # CST 383 – Intro to Data Science
-# ### Project 2: Predicting Kickstarter Goal Completion
+# # Predicting Kickstarter Goal Completion
 # **Authors:** Brianna Magallon, Tyler Pruitt, Rafael L.S. Reis
 
 # %% [markdown]
 # ## Introduction
-# In this project, we use the Kickstarter Projects dataset to build a model that predicts whether a crowdfunding campaign will succeed or fail based on information available at launch. Each entry includes metadata such as goal amount, number of backers, campaign duration, and category.
 #
-# We treat this as a binary classification problem, where the outcomes are `'successful'` or `'failed'`. We merge `'canceled'` campaigns into the `'failed'` category, based on the observation that they typically don't meet funding goals.
+# Kickstarter is an online crowdfunding platform where creators can launch projects and set a fundraising goal. Backers can pledge money to support these projects, but funding is only received if the campaign meets its goal by a set deadline. Projects span many categories, including music, film, art, and technology.
+#
+# In this project, we use the Kickstarter Projects dataset to predict whether a new campaign will succeed or fail, using only information available at launch. This includes the project's funding goal, duration, launch month, and even keywords in the campaign title.
+#
+# Our goal is to build a model that can help creators set realistic expectations and improve their campaign planning. Knowing in advance whether a campaign is likely to succeed can guide creators toward adjustments in timing, budget, or presentation before going live.
 #
 # **Dataset Source:**  
 # [Kickstarter Projects (Kaggle)](https://www.kaggle.com/datasets/kemical/kickstarter-projects)
@@ -31,17 +33,18 @@
 import warnings
 import pandas as pd
 import seaborn as sns
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import learning_curve
 
 # %%
 sns.set_theme(style='whitegrid', context='notebook')
@@ -199,6 +202,13 @@ df.info()
 df.sample(5)
 
 # %% [markdown]
+# Encode main_category 
+
+# %%
+main_cat_dummies = pd.get_dummies(df['main_category'], prefix='main', drop_first=True)
+df = pd.concat([df, main_cat_dummies], axis=1)
+
+# %% [markdown]
 # ## Machine Learning
 #
 # We define our features and target, then apply a baseline and two models. We'll compare their performance to understand how well basic models do on this problem.
@@ -218,13 +228,13 @@ logreg = LogisticRegression(max_iter=1000)
 logreg.fit(X_train, y_train)
 y_pred_logreg = logreg.predict(X_test)
 print("Logistic Regression accuracy:", accuracy_score(y_test, y_pred_logreg))
-print(classification_report(y_test, y_pred_logreg))
+#print(classification_report(y_test, y_pred_logreg))
 
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(X_train, y_train)
 y_pred_knn = knn.predict(X_test)
 print("KNN accuracy:", accuracy_score(y_test, y_pred_knn))
-print(classification_report(y_test, y_pred_knn))
+#print(classification_report(y_test, y_pred_knn))
 
 # %% [markdown]
 # Both models beat the baseline, but KNN appears to be overfitting. More work is needed to improve generalization.
@@ -256,7 +266,7 @@ df.drop(columns=['backers']).sample(5)
 
 # %%
 #define predictor variables and target
-X = df[['goal', 'duration_days'] + [f'has_{w}' for w in top_words]]
+X = df[['goal', 'duration_days','launch_month'] + [f'has_{w}' for w in top_words]+ list(main_cat_dummies.columns)]
 y = df['state_encoded']
 
 #Test Train Split 
@@ -272,7 +282,7 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 #KNN
-for k in [3, 5, 7, 9, 11 , 15]:
+for k in [3, 5, 11 , 15, 20]:
     knn = KNeighborsClassifier(n_neighbors=k)
     scores = cross_val_score(knn, X_train_scaled, y_train, cv=5)
     print(f"K={k} - Cross-val accuracy: {scores.mean():.3f}")
@@ -289,7 +299,7 @@ print("Cross-val accuracy:", cv_scores.mean())
 
 # %%
 #define all features (goal, duration_days, title keywords)
-X = df[['goal', 'duration_days'] + [f'has_{w}' for w in top_words]]
+X = df[['goal', 'duration_days','launch_month'] + [f'has_{w}' for w in top_words]+ list(main_cat_dummies.columns)]
 y = df['state_encoded']
 
 #Test Train Split 
@@ -311,6 +321,39 @@ selected_mask = selector.get_support()
 selected_features = X.columns[selected_mask]
 print("Selected features:", list(selected_features))
 
+# %%
+selected =['goal', 'has_album', 'main_Dance', 'main_Music', 'main_Theater']
+X = df[selected]
+y = df['state_encoded']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+logreg = LogisticRegression(max_iter=1000)
+logreg.fit(X_train_scaled, y_train)
+print("Test accuracy:", logreg.score(X_test_scaled, y_test))
+
+# %%
+logreg = LogisticRegression(max_iter=1000)
+
+train_sizes, train_scores, test_scores = \
+    learning_curve(logreg, X_train_scaled, y_train, cv=5,
+                   scoring='accuracy')
+
+train_scores_mean = np.mean(train_scores, axis=1)
+test_scores_mean = np.mean(test_scores, axis=1)
+
+plt.plot(train_sizes, train_scores_mean, label='train')
+plt.plot(train_sizes, test_scores_mean, label='test')
+plt.xlabel('training set size')
+plt.ylabel('accuracy')
+plt.title('Learning curve, logistic regression')
+plt.legend()
+plt.grid(True)
+plt.show()
+
 # %% [markdown]
 # ## Conclusion
 #
@@ -320,14 +363,3 @@ print("Selected features:", list(selected_features))
 # - **Logistic Regression** provided reasonable performance and interpretable coefficients, highlighting the importance of features like number of backers and pledged amount.
 # - **K-Nearest Neighbors** appeared to overfit the training data, performing well on training but less effectively on the test set.
 # - Both models, while better than guessing the majority class, still left substantial room for improvement.
-#
-# ### Challenges & Next Steps:
-# - The overfitting observed, especially in KNN, suggests a need for perhaps **feature scaling**, **regularization**, or **simplification**.
-# - We haven’t yet made use of potentially informative categorical features like main_category or category.
-# - Adding **cross-validation**, **feature engineering**, and testing other models (e.g., decision trees, gradient boosting) would be valuable next steps.
-#
-# While this was a solid start, there’s still a lot of work ahead to build a robust and generalizable model. That said, we're excited to dive into model tuning and optimization since this is the part we all find most engaging. The data cleaning process was a bit frustrating and a bit of a pain sometimes... so we're glad to have made it through that and can now focus on the fun side of machine learning :)
-#
-#
-#
-# (I know we might do some more cleaning stuff, but we're mostly done with that)
